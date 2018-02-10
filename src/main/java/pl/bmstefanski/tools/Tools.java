@@ -99,7 +99,7 @@ public class Tools extends JavaPlugin implements ToolsAPI {
         registerCommands(
                 new ToolsCommand(this),
                 new WhoisCommand(this),
-                new WorkbenchCommand(this),
+                new InventoryCommand(this),
                 new ReloadCommand(this),
                 new ListCommand(this),
                 new HealCommand(this),
@@ -126,7 +126,8 @@ public class Tools extends JavaPlugin implements ToolsAPI {
                 new KickCommand(this),
                 new KickAllCommand(this),
                 new DayCommand(this),
-                new NightCommand(this)
+                new NightCommand(this),
+                new WorkbenchCommand(this)
         );
 
     }
