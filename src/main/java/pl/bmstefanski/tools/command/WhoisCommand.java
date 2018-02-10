@@ -30,17 +30,21 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import pl.bmstefanski.commands.Arguments;
+import pl.bmstefanski.commands.Messageable;
+import pl.bmstefanski.commands.annotation.Command;
+import pl.bmstefanski.commands.annotation.Completer;
+import pl.bmstefanski.commands.annotation.GameOnly;
+import pl.bmstefanski.commands.annotation.Permission;
 import pl.bmstefanski.tools.Tools;
 import pl.bmstefanski.tools.api.basic.User;
 import pl.bmstefanski.tools.basic.manager.UserManager;
-import pl.bmstefanski.tools.command.basic.CommandContext;
-import pl.bmstefanski.tools.command.basic.CommandInfo;
 import pl.bmstefanski.tools.storage.configuration.Messages;
 import pl.bmstefanski.tools.util.*;
 
 import java.util.List;
 
-public class WhoisCommand implements MessageUtils, Parser {
+public class WhoisCommand implements Messageable, Parser {
 
     private final Tools plugin;
     private final Messages messages;
@@ -50,17 +54,14 @@ public class WhoisCommand implements MessageUtils, Parser {
         this.messages = plugin.getMessages();
     }
 
-    @CommandInfo(
-            name = "whois",
-            description = "whois command",
-            permission = "whois",
-            usage = "[player]",
-            completer = "whoisCompleter"
-    )
-    public void whois(CommandSender commandSender, CommandContext context) {
+    @Command(name = "whois", usage = "[player]", max = 1)
+    @Permission("tools.command.whois")
+    @GameOnly(false)
+    public void command(Arguments arguments) {
 
+        CommandSender commandSender = arguments.getSender();
 
-        if (context.getArgs().length == 0) {
+        if (arguments.getArgs().length == 0) {
 
             if (!(commandSender instanceof Player)) {
                 sendMessage(commandSender, messages.getOnlyPlayer());
@@ -70,23 +71,28 @@ public class WhoisCommand implements MessageUtils, Parser {
             Player player = (Player) commandSender;
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player.getUniqueId());
 
-            sendMessage(player, messageContent(player, offlinePlayer));
+            sendMessage(player, messageContent(offlinePlayer));
 
             return;
         }
 
-        if (Bukkit.getPlayer(context.getParam(0)) == null) {
-            sendMessage(commandSender, StringUtils.replace(messages.getPlayerNotFound(), "%player%", context.getParam(0)));
-            return;
+        if (commandSender.hasPermission("tools.command.whois.other")) {
+
+            if (Bukkit.getPlayer(arguments.getArgs(0)) == null) {
+                sendMessage(commandSender, StringUtils.replace(messages.getPlayerNotFound(), "%player%", arguments.getArgs(0)));
+                return;
+            }
+
+            Player target = Bukkit.getPlayer(arguments.getArgs(0));
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(target.getUniqueId());
+
+            sendMessage(commandSender, messageContent(offlinePlayer));
+
         }
 
-        Player target = Bukkit.getPlayer(context.getParam(0));
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(target.getUniqueId());
-
-        sendMessage(commandSender, messageContent(target, offlinePlayer));
     }
 
-    private String messageContent(Player player, OfflinePlayer offlinePlayer) {
+    private String messageContent(OfflinePlayer offlinePlayer) {
         User user = UserManager.getUser(offlinePlayer.getUniqueId());
 
         Location location = offlinePlayer.getPlayer().getLocation();
@@ -104,14 +110,15 @@ public class WhoisCommand implements MessageUtils, Parser {
 
         return StringUtils.replaceEach(whois,
                 new String[] {"%nickname%", "%uuid%", "%ip%", "%registered%", "%last%", "%location%", "%hp%", "%hunger%", "%gamemode%", "%god%", "%fly%"},
-                new String[] {offlinePlayer.getName(), offlinePlayer.getUniqueId().toString(), offlinePlayer.getPlayer().getAddress().getHostName(),
+                new String[] {offlinePlayer.getName(), offlinePlayer.getUniqueId().toString(), offlinePlayer.getPlayer().getAddress().getAddress().toString(),
                         playerJoin, playerLast, playerLocation, playerHealth, playerFoodLevel, playerGamemode, parseBoolean(user.isGod()),
                         parseBoolean(offlinePlayer.getPlayer().isFlying())
                 });
     }
 
-    public List<String> whoisCompleter(CommandSender commandSender, CommandContext context) {
-        List<String> availableList = TabCompleterUtils.getAvailableList(context);
+    @Completer("whois")
+    public List<String> completer(Arguments arguments) {
+        List<String> availableList = TabCompleterUtils.getAvailableList(arguments);
         if (availableList != null) return availableList;
 
         return null;

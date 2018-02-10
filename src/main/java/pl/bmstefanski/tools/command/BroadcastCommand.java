@@ -24,17 +24,18 @@
 
 package pl.bmstefanski.tools.command;
 
-import net.minecraft.server.v1_12_R1.PacketPlayOutTitle.EnumTitleAction;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import pl.bmstefanski.commands.Arguments;
+import pl.bmstefanski.commands.Messageable;
+import pl.bmstefanski.commands.annotation.Command;
+import pl.bmstefanski.commands.annotation.Completer;
+import pl.bmstefanski.commands.annotation.GameOnly;
+import pl.bmstefanski.commands.annotation.Permission;
 import pl.bmstefanski.tools.Tools;
-import pl.bmstefanski.tools.command.basic.CommandContext;
-import pl.bmstefanski.tools.command.basic.CommandInfo;
 import pl.bmstefanski.tools.storage.configuration.Messages;
-import pl.bmstefanski.tools.util.MessageUtils;
-import pl.bmstefanski.tools.util.reflect.PacketSender;
+import pl.bmstefanski.tools.util.reflect.TitleSender;
 import pl.bmstefanski.tools.util.reflect.transition.PacketPlayOutTitle;
 
 import java.util.Arrays;
@@ -42,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class BroadcastCommand implements MessageUtils {
+public class BroadcastCommand implements Messageable {
 
     private final Tools plugin;
     private final Messages messages;
@@ -52,51 +53,34 @@ public class BroadcastCommand implements MessageUtils {
         this.messages = plugin.getMessages();
     }
 
-    @CommandInfo(
-            name = {"broadcast", "bc"},
-            description = "broadcast command",
-            usage = "<action/title/subtitle/chat>",
-            permission = "broadcast",
-            min = 2,
-            completer = "broadcastCompleter"
-    )
-    public void broadcast(CommandSender commandSender, CommandContext context) {
+    @Command(name = "broadcast", usage = "<action/title/subtitle/chat>", min = 2, max = 16, aliases = {"bc"})
+    @Permission("tools.command.broadcast")
+    @GameOnly(false)
+    public void command(Arguments arguments) {
 
+        CommandSender sender = arguments.getSender();
         StringBuilder stringBuilder = new StringBuilder();
 
-        for (int i = 1; i < context.getArgs().length; i++) {
+        for (int i = 1; i < arguments.getArgs().length; i++) {
             stringBuilder.append(" ");
-            stringBuilder.append(context.getArgs()[i]);
+            stringBuilder.append(arguments.getArgs()[i]);
         }
 
         String message = stringBuilder.toString();
+        TitleSender title = new TitleSender();
 
-        // todo builder do packetplayouttitle :D
-
-        switch (context.getParam(0)) {
+        switch (arguments.getArgs(0)) {
             case "action":
-                List<Object> actionPackets = Collections.singletonList(
-                        PacketPlayOutTitle.getPacket(EnumTitleAction.ACTIONBAR, message, -1, -1, -1)
-                );
-
-                PacketSender.sendPacket(Bukkit.getOnlinePlayers(), actionPackets);
+                title.send(PacketPlayOutTitle.EnumTitleAction.ACTIONBAR, Bukkit.getOnlinePlayers(), message);
                 break;
 
             case "title":
-                List<Object> titlePackets = Collections.singletonList(
-                        PacketPlayOutTitle.getPacket(EnumTitleAction.TITLE, message, -1, -1, -1)
-                );
-
-                PacketSender.sendPacket(Bukkit.getOnlinePlayers(), titlePackets);
+                title.send(PacketPlayOutTitle.EnumTitleAction.TITLE, Bukkit.getOnlinePlayers(), message);
                 break;
 
             case "subtitle":
-                List<Object> subtitlePackets = Arrays.asList(
-                        PacketPlayOutTitle.getPacket(EnumTitleAction.TITLE, "", -1, -1, -1),
-                        PacketPlayOutTitle.getPacket(EnumTitleAction.SUBTITLE, message, -1, -1, -1)
-                );
-
-                PacketSender.sendPacket(Bukkit.getOnlinePlayers(), subtitlePackets);
+                title.send(PacketPlayOutTitle.EnumTitleAction.TITLE, Bukkit.getOnlinePlayers(), "");
+                title.send(PacketPlayOutTitle.EnumTitleAction.SUBTITLE, Bukkit.getOnlinePlayers(), message);
                 break;
 
             case "chat":
@@ -105,8 +89,9 @@ public class BroadcastCommand implements MessageUtils {
         }
     }
 
-    public List<String> broadcastCompleter(CommandSender commandSender, CommandContext context) {
-        if (context.getArgs().length == 1) {
+    @Completer("broadcast")
+    public List<String> completer(Arguments arguments) {
+        if (arguments.getArgs().length == 1) {
             List<String> availableGamemodes = Arrays.asList("action", "title", "subtitle", "chat");
 
             Collections.sort(availableGamemodes);

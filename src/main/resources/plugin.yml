@@ -1,5 +1,5 @@
-name: Tools
-version: BETA
+name: WhippyTools
+version: 1.0-SNAPSHOT
 main: pl.bmstefanski.tools.Tools
 authors: [BMStefanski]
 description: Tools plugin

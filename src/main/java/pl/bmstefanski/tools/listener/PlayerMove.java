@@ -30,13 +30,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import pl.bmstefanski.commands.Messageable;
 import pl.bmstefanski.tools.Tools;
 import pl.bmstefanski.tools.api.basic.User;
 import pl.bmstefanski.tools.basic.manager.UserManager;
 import pl.bmstefanski.tools.storage.configuration.Messages;
-import pl.bmstefanski.tools.util.MessageUtils;
 
-public class PlayerMove implements Listener, MessageUtils{
+public class PlayerMove implements Listener, Messageable {
 
     private final Tools plugin;
     private final Messages messages;
@@ -48,19 +48,32 @@ public class PlayerMove implements Listener, MessageUtils{
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
+
         Player player = event.getPlayer();
         User user = UserManager.getUser(player.getUniqueId());
-        if (event.getFrom().getBlockX() != event.getTo().getBlockX()
-                || event.getFrom().getBlockY() != event.getTo().getBlockY()
-                || event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
 
+        if (!plugin.getConfiguration().getCancelAfkOnMove() && !plugin.getConfiguration().getFreezeAfkPlayers()) {
+            event.getHandlers().unregister(this);
+
+            return;
         }
 
         if (user.isAfk()) {
-            user.setAfk(false);
-            sendMessage(player, messages.getNoLongerAfk());
-            Bukkit.getOnlinePlayers().forEach(p ->
-                    sendMessage(p, StringUtils.replace(messages.getNoLongerAfkGlobal(), "%player%", player.getName())));
+
+            if (plugin.getConfiguration().getFreezeAfkPlayers()) {
+                event.setTo(event.getFrom());
+
+                return;
+            }
+
+            if (plugin.getConfiguration().getCancelAfkOnMove() && event.getFrom() == event.getTo()) {
+                user.setAfk(false);
+                sendMessage(player, messages.getNoLongerAfk());
+                Bukkit.getOnlinePlayers().forEach(p ->
+                        sendMessage(p, StringUtils.replace(messages.getNoLongerAfkGlobal(), "%player%", player.getName())));
+            }
+
+
         }
     }
 }

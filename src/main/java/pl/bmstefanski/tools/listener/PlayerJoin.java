@@ -29,12 +29,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import pl.bmstefanski.commands.Messageable;
 import pl.bmstefanski.tools.Tools;
 import pl.bmstefanski.tools.api.basic.User;
 import pl.bmstefanski.tools.basic.manager.UserManager;
-import pl.bmstefanski.tools.util.MessageUtils;
 
-public class PlayerJoin implements Listener, MessageUtils {
+public class PlayerJoin implements Listener, Messageable {
 
     private final Tools plugin;
 
@@ -49,5 +49,17 @@ public class PlayerJoin implements Listener, MessageUtils {
         User user = UserManager.getUser(player.getUniqueId());
 
         event.setJoinMessage(fixColor(StringUtils.replace(plugin.getConfiguration().getJoinFormat(), "%player%", player.getName())));
+
+        if (plugin.getConfiguration().getFlyOnJoin()) {
+            if (player.isFlying()) {
+                player.setFlying(true);
+                player.setAllowFlight(true);
+            }
+        }
+
+        if (plugin.getConfiguration().getSafeLogin()) {
+            player.setFallDistance(0F);
+        }
+
     }
 }

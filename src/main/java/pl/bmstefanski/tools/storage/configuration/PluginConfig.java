@@ -28,23 +28,89 @@ import org.diorite.config.Config;
 import org.diorite.config.ConfigManager;
 import org.diorite.config.annotations.CustomKey;
 
+import java.util.List;
+
 public interface PluginConfig extends Config {
 
-    default String getLanguage() {
-        return "pl";
-    }
-
+    @CustomKey("join-format")
     default String getJoinFormat() {
         return "&e%player% &adolaczyl do gierki!";
     }
 
+    @CustomKey("quit-format")
     default String getQuitFormat() {
         return "&e%player% &cwyszedl z gierki!";
     }
 
+    @CustomKey("spawn-delay")
     default int getSpawnDelay() {
         return 5;
     }
+
+    @CustomKey("back-delay")
+    default int getBackDelay() {
+        return 3;
+    }
+
+    @CustomKey("spawn-on-respawn")
+    default boolean getSpawnRespawn() {
+        return true;
+    }
+
+    @CustomKey("spawn-on-firstjoin")
+    default boolean getSpawnFirstjoin() {
+        return true;
+    }
+
+    @CustomKey("remove-god-on-disconnect")
+    default boolean getRemoveGodOnDisconnect() {
+        return false;
+    }
+
+    @CustomKey("fly-on-join")
+    default boolean getFlyOnJoin() {
+        return true;
+    }
+
+    @CustomKey("freeze-afk-players")
+    default boolean getFreezeAfkPlayers() {
+        return true;
+    }
+
+    @CustomKey("safe-login")
+    default boolean getSafeLogin() {
+        return true;
+    }
+
+    @CustomKey("cancel-afk-on-move")
+    default boolean getCancelAfkOnMove() {
+        return true;
+    }
+
+    @CustomKey("max-nickname-length")
+    default int getMaxNicknameLength() {
+        return 16;
+    }
+
+    @CustomKey("cancel-afk-on-interact")
+    default boolean getCancelAfkOnInteract() {
+        return true;
+    }
+
+    @CustomKey("disable-item-pickup-while-afk")
+    default boolean getDisableItemPickupWhileAfk() {
+        return true;
+    }
+
+    @CustomKey("death-messages")
+    default boolean getDeathMessages() {
+        return false;
+    }
+
+    @CustomKey("blocked-commands")
+    List<String> getBlockedCommands();
+
+    boolean containsBlockedCommands(String string);
 
     @CustomKey("mysql")
     default MySQL getMySQLSection() {

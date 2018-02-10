@@ -2,19 +2,17 @@ package pl.bmstefanski.tools.command;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.ItemStack;
+import pl.bmstefanski.commands.Arguments;
+import pl.bmstefanski.commands.Messageable;
+import pl.bmstefanski.commands.annotation.Command;
+import pl.bmstefanski.commands.annotation.GameOnly;
+import pl.bmstefanski.commands.annotation.Permission;
 import pl.bmstefanski.tools.Tools;
-import pl.bmstefanski.tools.command.basic.CommandContext;
-import pl.bmstefanski.tools.command.basic.CommandInfo;
 import pl.bmstefanski.tools.storage.configuration.Messages;
-import pl.bmstefanski.tools.util.MessageUtils;
-import pl.bmstefanski.tools.util.TabCompleterUtils;
 
-import java.util.List;
-
-public class RepairCommand implements MessageUtils {
+public class RepairCommand implements Messageable {
 
     private final Tools plugin;
     private final Messages messages;
@@ -24,35 +22,25 @@ public class RepairCommand implements MessageUtils {
         this.messages = plugin.getMessages();
     }
 
-    @CommandInfo(
-            name = "repair",
-            description = "repair command",
-            userOnly = true,
-            permission = "repair",
-            completer = "repairCompleter"
-    )
-    public void repair(CommandSender commandSender, CommandContext context) {
-        Player player = (Player) commandSender;
-        PlayerInventory playerInventory = player.getInventory();
+    @Command(name = "repair")
+    @Permission("tools.command.repair")
+    @GameOnly
+    public void command(Arguments arguments) {
+        Player player = (Player) arguments.getSender();
+        ItemStack item = player.getInventory().getItemInMainHand();
 
-        if (playerInventory.getItemInMainHand().getType() == Material.AIR) {
+        if (item.getType() == Material.AIR) {
             sendMessage(player, messages.getCannotRepair());
             return;
         }
-        if (playerInventory.getItemInMainHand().getDurability() == playerInventory.getItemInMainHand().getType().getMaxDurability()) {
+
+        if (item.getDurability() == item.getType().getMaxDurability()) {
             sendMessage(player, messages.getCannotRepairFull());
             return;
         }
 
-        playerInventory.getItemInMainHand().setDurability(playerInventory.getItemInMainHand().getType().getMaxDurability());
-        sendMessage(player, StringUtils.replace(messages.getRepaired(), "%item%", playerInventory.getItemInMainHand().getType().name().toLowerCase()));
+        item.setDurability((short) 0);
+        sendMessage(player, StringUtils.replace(messages.getRepaired(), "%item%", item.getType().name().toLowerCase()));
 
-    }
-
-    public List<String> repairCompleter(CommandSender commandSender, CommandContext context) {
-        List<String> availableList = TabCompleterUtils.getAvailableList(context);
-        if (availableList != null) return availableList;
-
-        return null;
     }
 }
